@@ -1,3 +1,5 @@
+"use client"; // Make this a client component
+
 import { DollarSign, TrendingUp, TrendingDown, CreditCard, PlusCircle } from "lucide-react";
 import { SummaryCard } from "@/components/dashboard/summary-card";
 import { RecentTransactions } from "@/components/dashboard/recent-transactions";
@@ -19,7 +21,7 @@ export default function DashboardPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-3xl font-bold tracking-tight font-headline">Financial Overview</h2>
-          <p className="text-muted-foreground">Welcome back to WalletSage! Here&apos;s your current financial status.</p>
+          <p className="text-muted-foreground">Welcome back to Flow! Here&apos;s your current financial status.</p>
         </div>
         <Button asChild className="bg-accent hover:bg-accent/90 text-accent-foreground">
           <Link href="/transactions?action=add">
