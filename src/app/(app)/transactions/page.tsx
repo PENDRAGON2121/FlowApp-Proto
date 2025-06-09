@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -55,10 +56,18 @@ const categoryMap: Record<string, string> = {
 
 
 export default function TransactionsPage() {
-  const [transactions, setTransactions] = React.useState<Transaction[]>(mockTransactionsData);
+  const [transactions, setTransactions] = React.useState<Transaction[]>([]); // Initialize with empty array
   const [isFormOpen, setIsFormOpen] = React.useState(false);
   const [editingTransaction, setEditingTransaction] = React.useState<Transaction | undefined>(undefined);
   const { toast } = useToast();
+
+  React.useEffect(() => {
+    // Set initial transactions on the client side to avoid hydration mismatch
+    setTransactions(
+        mockTransactionsData.sort((a, b) => b.date.getTime() - a.date.getTime())
+    );
+  }, []); // Empty dependency array ensures this runs once on mount on the client
+
 
   const handleAddTransaction = async (data: TransactionFormValues) => {
     const newTransaction: Transaction = { ...data, id: Date.now().toString() };
@@ -150,7 +159,7 @@ export default function TransactionsPage() {
                 {transactions.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                      No transactions yet. Click &quot;Add Transaction&quot; to get started.
+                      Loading transactions or no transactions yet...
                     </TableCell>
                   </TableRow>
                 )}
