@@ -128,8 +128,7 @@ export function CategorySelector({ value, onChange, transactionType }: CategoryS
               <Dialog open={customCategoryOpen} onOpenChange={setCustomCategoryOpen}>
                 <DialogTrigger asChild>
                    <CommandItem
-                    onSelect={(e) => {
-                      e.preventDefault(); // Prevent Command's default onSelect behavior
+                    onSelect={() => {
                       setCustomCategoryOpen(true);
                     }}
                     className="cursor-pointer"
