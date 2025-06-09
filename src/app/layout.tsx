@@ -3,8 +3,8 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: 'WalletSage',
-  description: 'Your personal finance companion',
+  title: 'Flow',
+  description: 'Your finances in your hands',
 };
 
 export default function RootLayout({

@@ -52,7 +52,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
       <div className="mb-8 flex items-center space-x-3">
         <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary h-16 w-16"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
-        <h1 className="text-4xl font-headline font-bold text-primary">WalletSage</h1>
+        <h1 className="text-4xl font-headline font-bold text-primary">Flow</h1>
       </div>
       <div className="w-full max-w-md rounded-lg bg-card p-8 shadow-xl">
         <h2 className="mb-6 text-center text-2xl font-semibold text-foreground">
@@ -114,7 +114,7 @@ export default function LoginPage() {
         </p>
       </div>
        <p className="mt-8 text-center text-sm text-muted-foreground">
-        Your personal finance companion.
+        Your finances in your hands.
       </p>
     </div>
   );

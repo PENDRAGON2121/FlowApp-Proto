@@ -34,14 +34,14 @@ export function AppHeader({ pageTitle }: { pageTitle: string }) {
           <Button variant="ghost" size="icon" className="rounded-full">
             <Avatar className="h-9 w-9">
               <AvatarImage src="https://placehold.co/100x100.png" alt="User Avatar" data-ai-hint="user avatar" />
-              <AvatarFallback>WS</AvatarFallback>
+              <AvatarFallback>FL</AvatarFallback> {/* Changed from WS to FL for Flow */}
             </Avatar>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56">
           <DropdownMenuLabel className="font-normal">
             <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium leading-none">WalletSage User</p>
+              <p className="text-sm font-medium leading-none">Flow User</p> {/* Changed from WalletSage User */}
               <p className="text-xs leading-none text-muted-foreground">
                 user@example.com
               </p>

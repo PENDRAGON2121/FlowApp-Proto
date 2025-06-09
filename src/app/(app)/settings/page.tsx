@@ -24,14 +24,14 @@ export default function SettingsPage() {
           <div className="flex items-center space-x-4">
             <Avatar className="h-20 w-20">
               <AvatarImage src="https://placehold.co/100x100.png" alt="User Avatar" data-ai-hint="user avatar" />
-              <AvatarFallback>WS</AvatarFallback>
+              <AvatarFallback>FL</AvatarFallback>
             </Avatar>
             <Button variant="outline">Change Picture</Button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="name">Full Name</Label>
-              <Input id="name" defaultValue="WalletSage User" className="bg-background" />
+              <Input id="name" defaultValue="Flow User" className="bg-background" />
             </div>
             <div>
               <Label htmlFor="email">Email Address</Label>

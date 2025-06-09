@@ -15,7 +15,7 @@ const getPageTitle = (pathname: string): string => {
   if (pathname.startsWith('/savings-goals')) return 'Savings Goals';
   if (pathname.startsWith('/ai-advice')) return 'AI Financial Advisor';
   if (pathname.startsWith('/settings')) return 'Settings';
-  return 'WalletSage';
+  return 'Flow';
 };
 
 export default function AppLayout({ children }: { children: ReactNode }) {
