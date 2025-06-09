@@ -25,20 +25,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { format } from "date-fns";
-
-interface Transaction extends TransactionFormValues {
-  id: string;
-}
-
-const mockTransactionsData: Transaction[] = [
-  { id: '1', date: new Date('2024-07-15'), description: 'Groceries at Walmart', amount: 55.20, type: 'expense', category: 'food' },
-  { id: '2', date: new Date('2024-07-14'), description: 'Monthly Salary', amount: 2500.00, type: 'income', category: 'income' },
-  { id: '3', date: new Date('2024-07-13'), description: 'Netflix Subscription', amount: 15.00, type: 'expense', category: 'entertainment' },
-  { id: '4', date: new Date('2024-07-12'), description: 'Gasoline for Car', amount: 40.00, type: 'expense', category: 'transport' },
-  { id: '5', date: new Date('2024-07-11'), description: 'Freelance Web Design Project', amount: 300.00, type: 'income', category: 'income' },
-  { id: '6', date: new Date('2024-07-10'), description: 'Dinner with Friends', amount: 75.50, type: 'expense', category: 'food' },
-  { id: '7', date: new Date('2024-07-09'), description: 'Electricity Bill', amount: 65.00, type: 'expense', category: 'utilities' },
-];
+import { useTransactions, type Transaction } from "@/contexts/transactions-context"; // Import context
 
 // Dummy category map for display
 const categoryMap: Record<string, string> = {
@@ -56,22 +43,19 @@ const categoryMap: Record<string, string> = {
 
 
 export default function TransactionsPage() {
-  const [transactions, setTransactions] = React.useState<Transaction[]>([]); // Initialize with empty array
+  const { 
+    transactions, 
+    addTransaction: contextAddTransaction, 
+    updateTransaction: contextUpdateTransaction, 
+    deleteTransaction: contextDeleteTransaction,
+    isLoading 
+  } = useTransactions();
   const [isFormOpen, setIsFormOpen] = React.useState(false);
   const [editingTransaction, setEditingTransaction] = React.useState<Transaction | undefined>(undefined);
   const { toast } = useToast();
 
-  React.useEffect(() => {
-    // Set initial transactions on the client side to avoid hydration mismatch
-    setTransactions(
-        mockTransactionsData.sort((a, b) => b.date.getTime() - a.date.getTime())
-    );
-  }, []); // Empty dependency array ensures this runs once on mount on the client
-
-
   const handleAddTransaction = async (data: TransactionFormValues) => {
-    const newTransaction: Transaction = { ...data, id: Date.now().toString() };
-    setTransactions(prev => [newTransaction, ...prev].sort((a,b) => b.date.getTime() - a.date.getTime() ));
+    contextAddTransaction(data);
     setIsFormOpen(false);
   };
 
@@ -82,14 +66,13 @@ export default function TransactionsPage() {
   
   const handleUpdateTransaction = async (data: TransactionFormValues) => {
     if (!editingTransaction) return;
-    setTransactions(prev => prev.map(t => t.id === editingTransaction.id ? { ...editingTransaction, ...data } : t).sort((a,b) => b.date.getTime() - a.date.getTime()));
+    contextUpdateTransaction(editingTransaction.id, data);
     setIsFormOpen(false);
     setEditingTransaction(undefined);
   };
 
   const handleDeleteTransaction = (id: string) => {
-    // Add a confirmation dialog here in a real app
-    setTransactions(prev => prev.filter(t => t.id !== id));
+    contextDeleteTransaction(id);
     toast({ title: "Transaction Deleted", description: "The transaction has been removed."});
   };
 
@@ -156,14 +139,21 @@ export default function TransactionsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {transactions.length === 0 && (
+                {isLoading && (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                      Loading transactions or no transactions yet...
+                      Loading transactions...
                     </TableCell>
                   </TableRow>
                 )}
-                {transactions.map((transaction) => (
+                {!isLoading && transactions.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                      No transactions yet. Add your first one!
+                    </TableCell>
+                  </TableRow>
+                )}
+                {!isLoading && transactions.map((transaction) => (
                   <TableRow key={transaction.id}>
                     <TableCell className="text-muted-foreground tabular-nums">{format(transaction.date, "MMM dd, yyyy")}</TableCell>
                     <TableCell className="font-medium">{transaction.description}</TableCell>
