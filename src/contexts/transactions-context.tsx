@@ -14,11 +14,6 @@ export interface Transaction extends TransactionFormValues {
 const initialMockTransactionsData: Omit<Transaction, 'id' | 'date'> & { id: string, date: string }[] = [
   { id: '1', date: '2024-07-15', description: 'Groceries at Walmart', amount: 55.20, type: 'expense', category: 'food' },
   { id: '2', date: '2024-07-14', description: 'Monthly Salary', amount: 2500.00, type: 'income', category: 'income' },
-  { id: '3', date: '2024-07-13', description: 'Netflix Subscription', amount: 15.00, type: 'expense', category: 'entertainment' },
-  { id: '4', date: '2024-07-12', description: 'Gasoline for Car', amount: 40.00, type: 'expense', category: 'transport' },
-  { id: '5', date: '2024-07-11', description: 'Freelance Web Design Project', amount: 300.00, type: 'income', category: 'income' },
-  { id: '6', date: '2024-07-10', description: 'Dinner with Friends', amount: 75.50, type: 'expense', category: 'food' },
-  { id: '7', date: '2024-07-09', description: 'Electricity Bill', amount: 65.00, type: 'expense', category: 'utilities' },
 ];
 
 

@@ -12,36 +12,25 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input"; // For "Add Funds" modal
-import { Label } from "@/components/ui/label"; // For "Add Funds" modal
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-
-interface SavingsGoal extends SavingsGoalFormValues {
-  id: string;
-}
-
-const mockSavingsGoalsData: SavingsGoal[] = [
-  { id: '1', name: 'Dream Vacation to Japan', targetAmount: 5000, currentAmount: 1250, deadline: new Date('2025-08-15') },
-  { id: '2', name: 'New MacBook Pro', targetAmount: 2500, currentAmount: 2500, deadline: new Date('2024-10-01') },
-  { id: '3', name: 'Emergency Fund Tier 1', targetAmount: 1000, currentAmount: 700 },
-  { id: '4', name: 'House Down Payment', targetAmount: 50000, currentAmount: 5500, deadline: new Date('2027-01-01') },
-];
+import { useGoals } from "@/contexts/goals-context";
 
 export default function SavingsGoalsPage() {
-  const [goals, setGoals] = React.useState<SavingsGoal[]>(mockSavingsGoalsData);
+  const { goals, addGoal, updateGoal, deleteGoal, isLoading } = useGoals();
   const [isFormOpen, setIsFormOpen] = React.useState(false);
-  const [editingGoal, setEditingGoal] = React.useState<SavingsGoal | undefined>(undefined);
+  const [editingGoal, setEditingGoal] = React.useState<SavingsGoalFormValues | undefined>(undefined);
   const [isAddFundsModalOpen, setIsAddFundsModalOpen] = React.useState(false);
-  const [selectedGoalForFunds, setSelectedGoalForFunds] = React.useState<SavingsGoal | null>(null);
+  const [selectedGoalForFunds, setSelectedGoalForFunds] = React.useState<SavingsGoalFormValues | null>(null);
   const [fundsToAdd, setFundsToAdd] = React.useState<number>(0);
   const { toast } = useToast();
 
   const handleSubmitGoal = async (data: SavingsGoalFormValues) => {
     if (editingGoal) {
-      setGoals(prev => prev.map(g => g.id === editingGoal.id ? { ...editingGoal, ...data } : g));
+      updateGoal(editingGoal.id!, data);
     } else {
-      const newGoal: SavingsGoal = { ...data, id: Date.now().toString(), currentAmount: data.currentAmount || 0 };
-      setGoals(prev => [newGoal, ...prev]);
+      addGoal(data);
     }
     setIsFormOpen(false);
     setEditingGoal(undefined);
@@ -56,8 +45,7 @@ export default function SavingsGoalsPage() {
   };
 
   const handleDeleteGoal = (id: string) => {
-    // Add confirmation dialog in real app
-    setGoals(prev => prev.filter(g => g.id !== id));
+    deleteGoal(id);
     toast({ title: "Savings Goal Deleted", description: "The goal has been removed."});
   };
 
@@ -77,16 +65,31 @@ export default function SavingsGoalsPage() {
 
   const handleAddFunds = () => {
     if (!selectedGoalForFunds || fundsToAdd <= 0) return;
-    setGoals(prevGoals => prevGoals.map(g => 
-      g.id === selectedGoalForFunds.id 
-      ? { ...g, currentAmount: Math.min(g.targetAmount, (g.currentAmount || 0) + fundsToAdd) } 
-      : g
-    ));
-    toast({ title: "Funds Added", description: `$${fundsToAdd.toFixed(2)} added to "${selectedGoalForFunds.name}".` });
+    
+    const updatedGoal = {
+      ...selectedGoalForFunds,
+      currentAmount: Math.min(
+        selectedGoalForFunds.targetAmount,
+        (selectedGoalForFunds.currentAmount || 0) + fundsToAdd
+      )
+    };
+    
+    updateGoal(selectedGoalForFunds.id!, updatedGoal);
+    toast({ 
+      title: "Funds Added", 
+      description: `$${fundsToAdd.toFixed(2)} added to "${selectedGoalForFunds.name}".` 
+    });
     setIsAddFundsModalOpen(false);
     setSelectedGoalForFunds(null);
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <p className="text-muted-foreground">Cargando metas...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -173,7 +176,6 @@ export default function SavingsGoalsPage() {
           </div>
         </DialogContent>
       </Dialog>
-
     </div>
   );
 }

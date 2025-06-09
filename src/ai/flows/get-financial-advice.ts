@@ -24,27 +24,41 @@ const GetFinancialAdviceOutputSchema = z.object({
 });
 export type GetFinancialAdviceOutput = z.infer<typeof GetFinancialAdviceOutputSchema>;
 
-export async function getFinancialAdvice(input: GetFinancialAdviceInput): Promise<GetFinancialAdviceOutput> {
-  return getFinancialAdviceFlow(input);
-}
+export async function getFinancialAdvice(
+  input: GetFinancialAdviceInput
+): Promise<GetFinancialAdviceOutput> {
+  const apiKey = process.env.APIKEY_OPENROUTER;
+  if (!apiKey) throw new Error('APIKEY_OPENROUTER not set in .env');
 
-const prompt = ai.definePrompt({
-  name: 'getFinancialAdvicePrompt',
-  input: {schema: GetFinancialAdviceInputSchema},
-  output: {schema: GetFinancialAdviceOutputSchema},
-  prompt: `You are a personal finance expert. Based on the user's transaction history, provide advice on how to reduce costs.
+  const prompt = `Eres un experto en finanzas personales. Basado en el siguiente historial de transacciones, da consejos para reducir costos.\n\nHistorial de transacciones:\n${input.transactionHistory}`;
 
-Transaction History: {{{transactionHistory}}}`,
-});
+  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'meta-llama/llama-3.2-3b-instruct:free',
+      messages: [
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+    }),
+  });
 
-const getFinancialAdviceFlow = ai.defineFlow(
-  {
-    name: 'getFinancialAdviceFlow',
-    inputSchema: GetFinancialAdviceInputSchema,
-    outputSchema: GetFinancialAdviceOutputSchema,
-  },
-  async input => {
-    const {output} = await prompt(input);
-    return output!;
+  if (!response.ok) {
+    throw new Error(`OpenRouter API error: ${response.statusText}`);
   }
-);
+
+  const data = await response.json();
+  // La respuesta viene en Markdown, así que la devolvemos como tal
+  const advice = data.choices?.[0]?.message?.content
+    ? data.choices[0].message.content.trim()
+    : 'No se pudo obtener el consejo.';
+
+  // Puedes devolver el markdown directamente, y renderizarlo en el frontend con un parser de Markdown
+  return { advice };
+}
