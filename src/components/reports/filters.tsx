@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -13,8 +14,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon, FilterIcon } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
+import { format, startOfMonth, endOfMonth } from "date-fns";
 import type { DateRange } from "react-day-picker";
+import { Label } from "@/components/ui/label";
+import { Card } from "@/components/ui/card";
 
 const predefinedCategories = [
   { value: "all", label: "All Categories" },
@@ -23,20 +26,47 @@ const predefinedCategories = [
   { value: "housing", label: "Housing" },
   { value: "utilities", label: "Utilities" },
   { value: "entertainment", label: "Entertainment" },
+  { value: "health", label: "Healthcare" },
+  { value: "education", label: "Education" },
+  { value: "shopping", label: "Shopping" },
+  { value: "other", label: "Other" },
 ];
 
-export function ReportFilters() {
-  const [dateRange, setDateRange] = React.useState<DateRange | undefined>({
-    from: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
-    to: new Date(),
-  });
-  const [category, setCategory] = React.useState<string>("all");
-  const [transactionType, setTransactionType] = React.useState<string>("all");
+export interface ReportFilterValues {
+  dateRange: DateRange;
+  category: string;
+  transactionType: string;
+}
+
+interface ReportFiltersProps {
+  onFilterChange: (filters: ReportFilterValues) => void;
+  initialFilters?: Partial<ReportFilterValues>;
+}
+
+export function ReportFilters({ onFilterChange, initialFilters }: ReportFiltersProps) {
+  const defaultDateRange: DateRange = {
+    from: startOfMonth(new Date()),
+    to: endOfMonth(new Date()),
+  };
+
+  const [dateRange, setDateRange] = React.useState<DateRange | undefined>(initialFilters?.dateRange || defaultDateRange);
+  const [category, setCategory] = React.useState<string>(initialFilters?.category || "all");
+  const [transactionType, setTransactionType] = React.useState<string>(initialFilters?.transactionType || "all");
 
   const handleApplyFilters = () => {
-    console.log("Applying filters:", { dateRange, category, transactionType });
-    // Add logic to refetch or filter data based on selected filters
+    if (dateRange) {
+      onFilterChange({ dateRange, category, transactionType });
+    }
   };
+  
+  React.useEffect(() => {
+    // Apply filters automatically when a filter value changes.
+    // This could be changed to require a button click if preferred.
+    if (dateRange) {
+      onFilterChange({ dateRange, category, transactionType });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dateRange, category, transactionType]); // onFilterChange is a dependency we know won't change frequently in this context
 
   return (
     <Card className="p-4 sm:p-6 shadow-md">
@@ -116,7 +146,3 @@ export function ReportFilters() {
     </Card>
   );
 }
-
-// Need to add Label and Card to imports if not already there
-import { Label } from "@/components/ui/label";
-import { Card } from "@/components/ui/card";
