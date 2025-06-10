@@ -53,9 +53,10 @@ interface CategorySelectorProps {
   value: string;
   onChange: (value: string) => void;
   transactionType?: 'income' | 'expense';
+  disabledCategories?: string[];
 }
 
-export function CategorySelector({ value, onChange, transactionType }: CategorySelectorProps) {
+export function CategorySelector({ value, onChange, transactionType, disabledCategories = [] }: CategorySelectorProps) {
   const [open, setOpen] = React.useState(false);
   const [categories, setCategories] = React.useState<Category[]>(predefinedCategories);
   const [customCategoryOpen, setCustomCategoryOpen] = React.useState(false);
@@ -74,14 +75,17 @@ export function CategorySelector({ value, onChange, transactionType }: CategoryS
 
   // Filter categories based on transaction type if provided
   const filteredCategories = React.useMemo(() => {
-    if (!transactionType) return categories;
-    if (transactionType === 'income') {
-      return categories.filter(cat => cat.value === 'income' || !predefinedCategories.find(pc => pc.value === cat.value && pc.value !== 'income'));
+    let filtered = categories;
+    if (transactionType) {
+      if (transactionType === 'income') {
+        filtered = filtered.filter(cat => cat.value === 'income' || !predefinedCategories.find(pc => pc.value === cat.value && pc.value !== 'income'));
+      } else {
+        // For expense, exclude 'income' unless it's a custom category that happens to be named 'income'
+        filtered = filtered.filter(cat => cat.value !== 'income' || !predefinedCategories.find(pc => pc.value === cat.value && pc.value === 'income'));
+      }
     }
-    // For expense, exclude 'income' unless it's a custom category that happens to be named 'income'
-    return categories.filter(cat => cat.value !== 'income' || !predefinedCategories.find(pc => pc.value === cat.value && pc.value === 'income'));
+    return filtered;
   }, [categories, transactionType]);
-
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -107,11 +111,16 @@ export function CategorySelector({ value, onChange, transactionType }: CategoryS
               {filteredCategories.map((category) => (
                 <CommandItem
                   key={category.value}
-                  value={category.label} // Use label for search/display in command
+                  value={category.label}
                   onSelect={() => {
-                    onChange(category.value);
-                    setOpen(false);
+                    if (!disabledCategories.includes(category.value)) {
+                      onChange(category.value);
+                      setOpen(false);
+                    }
                   }}
+                  className={cn(
+                    disabledCategories.includes(category.value) && "opacity-50 cursor-not-allowed"
+                  )}
                 >
                   <Check
                     className={cn(

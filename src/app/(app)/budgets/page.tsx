@@ -20,11 +20,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-
-interface Budget extends BudgetFormValues {
-  id: string;
-  spentAmount: number; // This would come from actual transaction data
-}
+import { useBudgets } from "@/contexts/budgets-context";
+import { useTransactions } from "@/contexts/transactions-context";
 
 const monthsName = [
   "January", "February", "March", "April", "May", "June", 
@@ -43,17 +40,11 @@ const categoryDisplayNameMap: Record<string, string> = {
   other: "Other",
 };
 
-const mockBudgetsData: Budget[] = [
-  { id: '1', category: 'food', amount: 500, month: '07', year: '2024', spentAmount: 350.75 },
-  { id: '2', category: 'transport', amount: 150, month: '07', year: '2024', spentAmount: 165.00 },
-  { id: '3', category: 'entertainment', amount: 200, month: '07', year: '2024', spentAmount: 120.00 },
-  { id: '4', category: 'shopping', amount: 300, month: '06', year: '2024', spentAmount: 250.00 },
-];
-
 export default function BudgetsPage() {
-  const [budgets, setBudgets] = React.useState<Budget[]>(mockBudgetsData);
+  const { budgets, addBudget, updateBudget, deleteBudget, isLoading: isBudgetsLoading } = useBudgets();
+  const { transactions, isLoading: isTransactionsLoading } = useTransactions();
   const [isFormOpen, setIsFormOpen] = React.useState(false);
-  const [editingBudget, setEditingBudget] = React.useState<Budget | undefined>(undefined);
+  const [editingBudget, setEditingBudget] = React.useState<BudgetFormValues | undefined>(undefined);
   
   const [selectedMonth, setSelectedMonth] = React.useState<string>((new Date().getMonth() + 1).toString().padStart(2, '0'));
   const [selectedYear, setSelectedYear] = React.useState<string>(new Date().getFullYear().toString());
@@ -65,23 +56,46 @@ export default function BudgetsPage() {
     label: name,
   }));
 
+  // Calcular gastos por categoría para el período seleccionado
+  const expensesByCategory = React.useMemo(() => {
+    return transactions
+      .filter(t => 
+        t.type === 'expense' && 
+        t.date.getMonth() + 1 === parseInt(selectedMonth) &&
+        t.date.getFullYear().toString() === selectedYear
+      )
+      .reduce((acc, t) => {
+        const category = t.category;
+        acc[category] = (acc[category] || 0) + t.amount;
+        return acc;
+      }, {} as Record<string, number>);
+  }, [transactions, selectedMonth, selectedYear]);
+
   const handleSetBudget = async (data: BudgetFormValues) => {
-    const newBudget: Budget = { ...data, id: Date.now().toString(), spentAmount: 0 }; // Reset spentAmount for new/updated
-    setBudgets(prev => [...prev.filter(b => !(b.category === data.category && b.month === data.month && b.year === data.year)), newBudget]
-      .sort((a,b) => (a.year+a.month).localeCompare(b.year+b.month) || a.category.localeCompare(b.category))
-    );
+    if (editingBudget) {
+      updateBudget(editingBudget.id!, {
+        category: data.category,
+        limit: data.amount,
+        period: 'monthly'
+      });
+    } else {
+      addBudget({
+        category: data.category,
+        limit: data.amount,
+        period: 'monthly'
+      });
+    }
     setIsFormOpen(false);
     setEditingBudget(undefined);
   };
 
-  const handleEditBudget = (budget: Budget) => {
+  const handleEditBudget = (budget: BudgetFormValues) => {
     setEditingBudget(budget);
     setIsFormOpen(true);
   };
 
   const handleDeleteBudget = (id: string) => {
-    // Add confirmation dialog in real app
-    setBudgets(prev => prev.filter(b => b.id !== id));
+    deleteBudget(id);
   };
   
   const openNewBudgetForm = () => {
@@ -89,8 +103,16 @@ export default function BudgetsPage() {
     setIsFormOpen(true);
   }
 
-  const filteredBudgets = budgets.filter(b => b.month === selectedMonth && b.year === selectedYear);
+  const filteredBudgets = budgets.filter(b => b.period === 'monthly');
   const existingCategoriesForPeriod = filteredBudgets.map(b => b.category);
+
+  if (isBudgetsLoading || isTransactionsLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <p className="text-muted-foreground">Cargando presupuestos...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -164,10 +186,10 @@ export default function BudgetsPage() {
             <BudgetTracker
               key={budget.id}
               categoryName={categoryDisplayNameMap[budget.category] || budget.category}
-              budgetAmount={budget.amount}
-              spentAmount={budget.spentAmount}
-              month={monthsName[parseInt(budget.month)-1]}
-              year={budget.year}
+              budgetAmount={budget.limit}
+              spentAmount={expensesByCategory[budget.category] || 0}
+              month={monthsName[parseInt(selectedMonth)-1]}
+              year={selectedYear}
               onEdit={() => handleEditBudget(budget)}
               onDelete={() => handleDeleteBudget(budget.id)}
             />

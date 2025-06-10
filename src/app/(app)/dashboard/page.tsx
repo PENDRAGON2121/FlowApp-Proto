@@ -14,8 +14,87 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import Image from "next/image";
+import { useTransactions } from "@/contexts/transactions-context";
+import { useBudgets } from "@/contexts/budgets-context";
+import { useMemo } from "react";
+
+// Definir los límites de presupuesto por categoría
+const BUDGET_LIMITS: Record<string, number> = {
+  food: 500,
+  transportation: 300,
+  entertainment: 200,
+  utilities: 400,
+  shopping: 300,
+  // Añade más categorías según necesites
+};
 
 export default function DashboardPage() {
+  const { transactions, isLoading: isTransactionsLoading } = useTransactions();
+  const { budgets, isLoading: isBudgetsLoading } = useBudgets();
+
+  const { totalIncome, totalExpenses, currentBalance, activeBudgets, overspentBudgets } = useMemo(() => {
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth() + 1;
+    const currentYear = currentDate.getFullYear();
+
+    // Filtrar transacciones del mes actual
+    const currentMonthTransactions = transactions.filter(t => {
+      const transactionDate = new Date(t.date);
+      return transactionDate.getMonth() + 1 === currentMonth && 
+             transactionDate.getFullYear() === currentYear;
+    });
+
+    const income = currentMonthTransactions
+      .filter(t => t.type === 'income')
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    const expenses = currentMonthTransactions
+      .filter(t => t.type === 'expense')
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    // Calcular gastos por categoría para el mes actual
+    const expensesByCategory = currentMonthTransactions
+      .filter(t => t.type === 'expense')
+      .reduce((acc, t) => {
+        const category = t.category;
+        acc[category] = (acc[category] || 0) + t.amount;
+        return acc;
+      }, {} as Record<string, number>);
+
+    // Filtrar presupuestos del mes actual
+    const currentMonthBudgets = budgets.filter(budget => {
+      const budgetDate = new Date(budget.date);
+      return budgetDate.getMonth() + 1 === currentMonth && 
+             budgetDate.getFullYear() === currentYear;
+    });
+
+    // Encontrar categorías con presupuesto activo y que tengan gastos
+    const activeCategories = currentMonthBudgets.filter(
+      budget => expensesByCategory[budget.category] !== undefined && expensesByCategory[budget.category] > 0
+    );
+
+    // Encontrar categorías que exceden su presupuesto
+    const overspent = activeCategories.filter(
+      budget => (expensesByCategory[budget.category] || 0) > budget.limit
+    );
+
+    return {
+      totalIncome: income,
+      totalExpenses: expenses,
+      currentBalance: income - expenses,
+      activeBudgets: activeCategories.length,
+      overspentBudgets: overspent.length
+    };
+  }, [transactions, budgets]);
+
+  if (isTransactionsLoading || isBudgetsLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <p className="text-muted-foreground">Cargando datos financieros...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -33,29 +112,28 @@ export default function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <SummaryCard
           title="Total Income"
-          value="$5,231.89"
+          value={`$${totalIncome.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
           icon={TrendingUp}
           iconClassName="text-green-500"
-          footerText="+20.1% from last month"
         />
         <SummaryCard
           title="Total Expenses"
-          value="$2,780.45"
+          value={`$${totalExpenses.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
           icon={TrendingDown}
           iconClassName="text-red-500"
-          footerText="+12.5% from last month"
         />
         <SummaryCard
           title="Current Balance"
-          value="$2,451.44"
+          value={`$${currentBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
           icon={DollarSign}
-          iconClassName="text-primary"
+          iconClassName={currentBalance >= 0 ? "text-green-500" : "text-red-500"}
         />
         <SummaryCard
           title="Active Budgets"
-          value="5"
+          value={activeBudgets.toString()}
           icon={CreditCard}
-          footerText="2 Overspent"
+          footerText={overspentBudgets > 0 ? `${overspentBudgets} Overspent` : undefined}
+          iconClassName={overspentBudgets > 0 ? "text-red-500" : "text-primary"}
         />
       </div>
 

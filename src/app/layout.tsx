@@ -3,6 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { GoalsProvider } from "@/contexts/goals-context";
 import { TransactionsProvider } from "@/contexts/transactions-context";
+import { BudgetsProvider } from "@/contexts/budgets-context";
 
 export const metadata: Metadata = {
   title: 'Flow',
@@ -23,9 +24,11 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased min-h-screen bg-background text-foreground">
         <TransactionsProvider>
-          <GoalsProvider>
-            {children}
-          </GoalsProvider>
+          <BudgetsProvider>
+            <GoalsProvider>
+              {children}
+            </GoalsProvider>
+          </BudgetsProvider>
         </TransactionsProvider>
         <Toaster />
       </body>
